@@ -10,6 +10,12 @@ import { toast } from "sonner";
 import { differenceInDays } from "date-fns";
 import NavBar from "@/components/NavBar";
 import { ItemStatus } from "@/types/item";
+import { Info } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -39,6 +45,11 @@ const Index = () => {
   });
 
   const handleReserve = async (id: string) => {
+    if (!reservationData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+      toast.error("Veuillez entrer une adresse email valide");
+      return;
+    }
+
     try {
       await reserveItem(id, reservationData.name, reservationData.email);
       setSelectedItem(null);
@@ -62,7 +73,7 @@ const Index = () => {
   return (
     <div>
       <NavBar />
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 mt-[10px]">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Objets trouvés</h1>
           <Button onClick={handleAdminAccess} variant="outline">
@@ -129,11 +140,21 @@ const Index = () => {
                     >
                       {item.status}
                     </span>
-                    <span className="text-sm text-muted-foreground">
-                      {daysLeft > 0
-                        ? `${daysLeft} jours restants`
-                        : "Expiré"}
-                    </span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-sm text-muted-foreground">
+                        {daysLeft > 0
+                          ? `${daysLeft} jours restants`
+                          : "Expiré"}
+                      </span>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="h-4 w-4 text-muted-foreground" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Chaque objet trouvé est disponible pendant 30 jours. Passé ce délai, l'objet sera donné à une association.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
                   </div>
                   <p className="text-lg mb-4">{item.description}</p>
                   {item.status === "À récupérer" && daysLeft > 0 && (

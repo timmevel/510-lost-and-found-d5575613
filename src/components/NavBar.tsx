@@ -9,7 +9,7 @@ const NavBar = () => {
             <img
               src="/510-logo.png"
               alt="510 Training Club"
-              className="h-12 w-auto"
+              className="h-10 w-auto py-[10px]"
             />
           </Link>
         </div>

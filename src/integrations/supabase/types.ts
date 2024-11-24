@@ -37,7 +37,15 @@ export type Database = {
           reserved_by_name?: string | null
           status?: Database["public"]["Enums"]["item_status"] | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "items_cascade_delete"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

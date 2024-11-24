@@ -7,15 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { differenceInDays } from "date-fns";
 import NavBar from "@/components/NavBar";
 import { ItemStatus } from "@/types/item";
-import { Info } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import ItemCard from "@/components/ItemCard";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -113,62 +107,13 @@ const Index = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {displayedItems.map((item) => {
-            const daysLeft = 30 - differenceInDays(new Date(), new Date(item.created_at));
-            const statusColors = {
-              "À récupérer": "bg-green-500",
-              "Réservé": "bg-yellow-500",
-              "Récupéré": "bg-blue-500",
-            };
-
-            return (
-              <div
-                key={item.id}
-                className="bg-card rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
-              >
-                <img
-                  src={item.image_url}
-                  alt={item.description}
-                  className="w-full h-48 object-cover"
-                />
-                <div className="p-4">
-                  <div className="flex justify-between items-start mb-2">
-                    <span
-                      className={`${
-                        statusColors[item.status]
-                      } text-white px-2 py-1 rounded-full text-sm`}
-                    >
-                      {item.status}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <span className="text-sm text-muted-foreground">
-                        {daysLeft > 0
-                          ? `${daysLeft} jours restants`
-                          : "Expiré"}
-                      </span>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Info className="h-4 w-4 text-muted-foreground" />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Chaque objet trouvé est disponible pendant 30 jours. Passé ce délai, l'objet sera donné à une association.</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </div>
-                  </div>
-                  <p className="text-lg mb-4">{item.description}</p>
-                  {item.status === "À récupérer" && daysLeft > 0 && (
-                    <Button
-                      onClick={() => setSelectedItem(item.id)}
-                      className="w-full"
-                    >
-                      C'est à moi
-                    </Button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+          {displayedItems.map((item) => (
+            <ItemCard
+              key={item.id}
+              item={item}
+              onReserveClick={setSelectedItem}
+            />
+          ))}
         </div>
 
         <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>

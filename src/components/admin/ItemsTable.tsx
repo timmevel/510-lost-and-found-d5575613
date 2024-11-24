@@ -18,6 +18,7 @@ import {
 import { Button } from "../ui/button";
 import { Trash2 } from "lucide-react";
 import ImageModal from "../ImageModal";
+import ItemCountdown from "../ItemCountdown";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,13 +56,17 @@ const ItemsTable = ({ items, onStatusChange, onDelete }: ItemsTableProps) => {
               <TableHead>Image</TableHead>
               <TableHead>Description</TableHead>
               <TableHead>Statut</TableHead>
+              <TableHead>Délai</TableHead>
               <TableHead>Réservé par</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {items.map((item) => (
-              <TableRow key={item.id}>
+              <TableRow 
+                key={item.id}
+                className={item.status === "Expiré" ? "bg-red-50" : undefined}
+              >
                 <TableCell>
                   <img
                     src={item.image_url}
@@ -85,8 +90,12 @@ const ItemsTable = ({ items, onStatusChange, onDelete }: ItemsTableProps) => {
                       <SelectItem value="À récupérer">À récupérer</SelectItem>
                       <SelectItem value="Réservé">Réservé</SelectItem>
                       <SelectItem value="Récupéré">Récupéré</SelectItem>
+                      <SelectItem value="Expiré">Expiré</SelectItem>
                     </SelectContent>
                   </Select>
+                </TableCell>
+                <TableCell>
+                  <ItemCountdown createdAt={item.created_at} variant="admin" />
                 </TableCell>
                 <TableCell>
                   {item.reserved_by_name ? (
@@ -102,7 +111,7 @@ const ItemsTable = ({ items, onStatusChange, onDelete }: ItemsTableProps) => {
                 </TableCell>
                 <TableCell>
                   <div className="space-x-2">
-                    {item.status !== "Récupéré" && (
+                    {item.status !== "Récupéré" && item.status !== "Expiré" && (
                       <Button
                         variant="outline"
                         onClick={() => onStatusChange(item.id, "Récupéré")}

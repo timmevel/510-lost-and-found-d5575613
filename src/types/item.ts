@@ -1,4 +1,4 @@
-export type ItemStatus = "À récupérer" | "Réservé" | "Récupéré";
+export type ItemStatus = "À récupérer" | "Réservé" | "Récupéré" | "Expiré";
 
 export interface Item {
   id: string;

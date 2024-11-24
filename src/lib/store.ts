@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
 import { Item, ItemStatus } from '@/types/item';
+import { differenceInDays, subDays } from 'date-fns';
 
 interface StoreState {
   items: Item[];
@@ -15,13 +16,38 @@ export const useStore = create<StoreState>((set) => ({
   items: [],
   
   fetchItems: async () => {
+    const oneDayAgo = subDays(new Date(), 1).toISOString();
+    
     const { data, error } = await supabase
       .from('items')
       .select('*')
+      .or(`status.neq.Expiré,and(status.eq.Expiré,created_at.gt.${oneDayAgo})`)
       .order('created_at', { ascending: false });
     
     if (error) throw error;
-    set({ items: data || [] });
+
+    // Update expired items
+    const updatedItems = data?.map(item => {
+      if (item.status === "À récupérer") {
+        const daysLeft = 30 - differenceInDays(new Date(), new Date(item.created_at));
+        if (daysLeft <= 0) {
+          // Update item status in database
+          supabase
+            .from('items')
+            .update({ status: "Expiré" })
+            .eq('id', item.id)
+            .then(() => {
+              console.log(`Item ${item.id} marked as expired`);
+            })
+            .catch(console.error);
+          
+          return { ...item, status: "Expiré" };
+        }
+      }
+      return item;
+    });
+
+    set({ items: updatedItems || [] });
   },
 
   addItem: async ({ description, image }) => {

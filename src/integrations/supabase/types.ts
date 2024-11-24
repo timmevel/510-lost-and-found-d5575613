@@ -47,7 +47,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      item_status: "Perdu" | "Réservé" | "Trouvé"
+      item_status: "À récupérer" | "Réservé" | "Récupéré"
     }
     CompositeTypes: {
       [_ in never]: never

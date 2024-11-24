@@ -1,4 +1,4 @@
-export type ItemStatus = "Perdu" | "Réservé" | "Trouvé";
+export type ItemStatus = "À récupérer" | "Réservé" | "Récupéré";
 
 export interface Item {
   id: string;

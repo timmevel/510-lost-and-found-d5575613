@@ -13,7 +13,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
+import NavBar from "@/components/NavBar";
+import { ItemStatus } from "@/types/item";
 
 const Admin = () => {
   const { items, fetchItems, updateItemStatus, addItem } = useStore();
@@ -48,111 +57,130 @@ const Admin = () => {
     }
   };
 
+  const handleStatusChange = async (id: string, status: ItemStatus) => {
+    try {
+      await updateItemStatus(id, status);
+      toast.success("Statut mis à jour avec succès");
+    } catch (error) {
+      console.error(error);
+      toast.error("Erreur lors de la mise à jour du statut");
+    }
+  };
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Tableau de bord administrateur</h1>
-        <Button onClick={() => setIsAddingItem(true)}>Ajouter un objet</Button>
-      </div>
+    <div>
+      <NavBar />
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold">Tableau de bord administrateur</h1>
+          <Button onClick={() => setIsAddingItem(true)}>Ajouter un objet</Button>
+        </div>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Image</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Statut</TableHead>
-              <TableHead>Réservé par</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {items.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell>
-                  <img
-                    src={item.image_url}
-                    alt={item.description}
-                    className="w-16 h-16 object-cover rounded"
-                  />
-                </TableCell>
-                <TableCell>{item.description}</TableCell>
-                <TableCell>{item.status}</TableCell>
-                <TableCell>
-                  {item.reserved_by_name ? (
-                    <div>
-                      <div>{item.reserved_by_name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {item.reserved_by_email}
-                      </div>
-                    </div>
-                  ) : (
-                    "-"
-                  )}
-                </TableCell>
-                <TableCell>
-                  {item.status !== "Trouvé" && (
-                    <Button
-                      variant="outline"
-                      onClick={async () => {
-                        try {
-                          await updateItemStatus(item.id, "Trouvé");
-                          toast.success("Objet marqué comme trouvé");
-                        } catch (error) {
-                          console.error(error);
-                          toast.error("Erreur lors de la mise à jour du statut");
-                        }
-                      }}
-                    >
-                      Marquer comme trouvé
-                    </Button>
-                  )}
-                </TableCell>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Image</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead>Statut</TableHead>
+                <TableHead>Réservé par</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {items.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell>
+                    <img
+                      src={item.image_url}
+                      alt={item.description}
+                      className="w-16 h-16 object-cover rounded"
+                    />
+                  </TableCell>
+                  <TableCell>{item.description}</TableCell>
+                  <TableCell>
+                    <Select
+                      value={item.status}
+                      onValueChange={(value: ItemStatus) => handleStatusChange(item.id, value)}
+                    >
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Changer le statut" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="À récupérer">À récupérer</SelectItem>
+                        <SelectItem value="Réservé">Réservé</SelectItem>
+                        <SelectItem value="Récupéré">Récupéré</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell>
+                    {item.reserved_by_name ? (
+                      <div>
+                        <div>{item.reserved_by_name}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {item.reserved_by_email}
+                        </div>
+                      </div>
+                    ) : (
+                      "-"
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {item.status !== "Récupéré" && (
+                      <Button
+                        variant="outline"
+                        onClick={() => handleStatusChange(item.id, "Récupéré")}
+                      >
+                        Marquer comme récupéré
+                      </Button>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
 
-      <Dialog open={isAddingItem} onOpenChange={setIsAddingItem}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Ajouter un nouvel objet</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={newItem.description}
-                onChange={(e) =>
-                  setNewItem((prev) => ({
-                    ...prev,
-                    description: e.target.value,
-                  }))
-                }
-              />
+        <Dialog open={isAddingItem} onOpenChange={setIsAddingItem}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Ajouter un nouvel objet</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={newItem.description}
+                  onChange={(e) =>
+                    setNewItem((prev) => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+              <div>
+                <Label htmlFor="image">Image</Label>
+                <Input
+                  id="image"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) =>
+                    setNewItem((prev) => ({
+                      ...prev,
+                      image: e.target.files?.[0] || null,
+                    }))
+                  }
+                />
+              </div>
             </div>
-            <div>
-              <Label htmlFor="image">Image</Label>
-              <Input
-                id="image"
-                type="file"
-                accept="image/*"
-                onChange={(e) =>
-                  setNewItem((prev) => ({
-                    ...prev,
-                    image: e.target.files?.[0] || null,
-                  }))
-                }
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button onClick={handleAddItem}>Ajouter l'objet</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <DialogFooter>
+              <Button onClick={handleAddItem}>Ajouter l'objet</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 };

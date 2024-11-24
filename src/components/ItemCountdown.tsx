@@ -15,7 +15,7 @@ const ItemCountdown = ({ createdAt, variant = "default" }: ItemCountdownProps) =
   const daysLeft = 30 - differenceInDays(new Date(), new Date(createdAt));
   
   const getCountdownColor = () => {
-    if (daysLeft <= 0) return "text-red-500";
+    if (daysLeft <= 3) return "text-red-500";
     if (daysLeft <= 7) return "text-yellow-500";
     return "text-muted-foreground";
   };

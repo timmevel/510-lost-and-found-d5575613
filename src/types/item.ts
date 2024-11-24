@@ -1,12 +1,12 @@
-export type ItemStatus = "Lost" | "Reserved" | "Found";
+export type ItemStatus = "Perdu" | "Réservé" | "Trouvé";
 
 export interface Item {
   id: string;
   description: string;
-  imageUrl: string;
+  image_url: string;
   status: ItemStatus;
-  createdAt: string;
-  reservedBy?: {
+  created_at: string;
+  reserved_by?: {
     name: string;
     email: string;
   };

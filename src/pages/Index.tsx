@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Fuse from "fuse.js";
 import { useStore } from "@/lib/store";
@@ -11,10 +11,14 @@ import { differenceInDays } from "date-fns";
 
 const Index = () => {
   const navigate = useNavigate();
-  const { items, reserveItem } = useStore();
+  const { items, fetchItems, reserveItem } = useStore();
   const [search, setSearch] = useState("");
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [reservationData, setReservationData] = useState({ name: "", email: "" });
+
+  useEffect(() => {
+    fetchItems().catch(console.error);
+  }, [fetchItems]);
 
   const fuse = new Fuse(items, {
     keys: ["description"],
@@ -25,26 +29,31 @@ const Index = () => {
     ? fuse.search(search).map((result) => result.item)
     : items;
 
-  const handleReserve = (id: string) => {
-    reserveItem(id, reservationData.name, reservationData.email);
-    setSelectedItem(null);
-    setReservationData({ name: "", email: "" });
-    toast.success("Item reserved successfully! Please collect within 7 days.");
+  const handleReserve = async (id: string) => {
+    try {
+      await reserveItem(id, reservationData.name, reservationData.email);
+      setSelectedItem(null);
+      setReservationData({ name: "", email: "" });
+      toast.success("Objet réservé avec succès! Vous avez 7 jours pour le récupérer à la salle de sport.");
+    } catch (error) {
+      console.error(error);
+      toast.error("Erreur lors de la réservation");
+    }
   };
 
   const handleAdminAccess = () => {
-    const password = prompt("Please enter admin password:");
+    const password = prompt("Veuillez entrer le mot de passe administrateur:");
     if (password === "510Team") {
       navigate("/admin");
     } else {
-      toast.error("Invalid password");
+      toast.error("Mot de passe invalide");
     }
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Lost & Found</h1>
+        <h1 className="text-3xl font-bold">Objets trouvés</h1>
         <Button onClick={handleAdminAccess} variant="outline">
           Admin
         </Button>
@@ -53,7 +62,7 @@ const Index = () => {
       <div className="mb-8">
         <Input
           type="search"
-          placeholder="Search items..."
+          placeholder="Rechercher des objets..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-md"
@@ -62,11 +71,11 @@ const Index = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredItems.map((item) => {
-          const daysLeft = 30 - differenceInDays(new Date(), new Date(item.createdAt));
+          const daysLeft = 30 - differenceInDays(new Date(), new Date(item.created_at));
           const statusColors = {
-            Lost: "bg-[hsl(var(--status-lost))]",
-            Reserved: "bg-[hsl(var(--status-reserved))]",
-            Found: "bg-[hsl(var(--status-found))]",
+            Perdu: "bg-[hsl(var(--status-lost))]",
+            Réservé: "bg-[hsl(var(--status-reserved))]",
+            Trouvé: "bg-[hsl(var(--status-found))]",
           };
 
           return (
@@ -75,7 +84,7 @@ const Index = () => {
               className="bg-card rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
             >
               <img
-                src={item.imageUrl}
+                src={item.image_url}
                 alt={item.description}
                 className="w-full h-48 object-cover"
               />
@@ -90,17 +99,17 @@ const Index = () => {
                   </span>
                   <span className="text-sm text-muted-foreground">
                     {daysLeft > 0
-                      ? `${daysLeft} days left`
-                      : "Expired"}
+                      ? `${daysLeft} jours restants`
+                      : "Expiré"}
                   </span>
                 </div>
                 <p className="text-lg mb-4">{item.description}</p>
-                {item.status === "Lost" && daysLeft > 0 && (
+                {item.status === "Perdu" && daysLeft > 0 && (
                   <Button
                     onClick={() => setSelectedItem(item.id)}
                     className="w-full"
                   >
-                    Recover
+                    Réserver
                   </Button>
                 )}
               </div>
@@ -112,14 +121,14 @@ const Index = () => {
       <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Recover Item</DialogTitle>
+            <DialogTitle>Réserver l'objet</DialogTitle>
             <DialogDescription>
-              Please provide your details to reserve this item. You will have 7 days to collect it from the gym.
+              Veuillez fournir vos coordonnées pour réserver cet objet. Vous aurez 7 jours pour le récupérer à la salle de sport.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">Nom</Label>
               <Input
                 id="name"
                 value={reservationData.name}
@@ -151,7 +160,7 @@ const Index = () => {
               onClick={() => selectedItem && handleReserve(selectedItem)}
               disabled={!reservationData.name || !reservationData.email}
             >
-              Confirm
+              Confirmer
             </Button>
           </DialogFooter>
         </DialogContent>

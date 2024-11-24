@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,34 +16,43 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
 const Admin = () => {
-  const { items, updateItemStatus, addItem } = useStore();
+  const { items, fetchItems, updateItemStatus, addItem } = useStore();
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [newItem, setNewItem] = useState({
     description: "",
-    imageUrl: "",
+    image: null as File | null,
   });
 
-  const handleAddItem = () => {
-    if (!newItem.description || !newItem.imageUrl) {
-      toast.error("Please fill in all fields");
+  useEffect(() => {
+    fetchItems().catch(console.error);
+  }, [fetchItems]);
+
+  const handleAddItem = async () => {
+    if (!newItem.description || !newItem.image) {
+      toast.error("Veuillez remplir tous les champs");
       return;
     }
     
-    addItem({
-      ...newItem,
-      status: "Lost",
-    });
-    
-    setNewItem({ description: "", imageUrl: "" });
-    setIsAddingItem(false);
-    toast.success("Item added successfully");
+    try {
+      await addItem({
+        description: newItem.description,
+        image: newItem.image,
+      });
+      
+      setNewItem({ description: "", image: null });
+      setIsAddingItem(false);
+      toast.success("Objet ajouté avec succès");
+    } catch (error) {
+      console.error(error);
+      toast.error("Erreur lors de l'ajout de l'objet");
+    }
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-        <Button onClick={() => setIsAddingItem(true)}>Add Item</Button>
+        <h1 className="text-3xl font-bold">Tableau de bord administrateur</h1>
+        <Button onClick={() => setIsAddingItem(true)}>Ajouter un objet</Button>
       </div>
 
       <div className="rounded-md border">
@@ -52,8 +61,8 @@ const Admin = () => {
             <TableRow>
               <TableHead>Image</TableHead>
               <TableHead>Description</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Reserved By</TableHead>
+              <TableHead>Statut</TableHead>
+              <TableHead>Réservé par</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -62,7 +71,7 @@ const Admin = () => {
               <TableRow key={item.id}>
                 <TableCell>
                   <img
-                    src={item.imageUrl}
+                    src={item.image_url}
                     alt={item.description}
                     className="w-16 h-16 object-cover rounded"
                   />
@@ -70,11 +79,11 @@ const Admin = () => {
                 <TableCell>{item.description}</TableCell>
                 <TableCell>{item.status}</TableCell>
                 <TableCell>
-                  {item.reservedBy ? (
+                  {item.reserved_by ? (
                     <div>
-                      <div>{item.reservedBy.name}</div>
+                      <div>{item.reserved_by.name}</div>
                       <div className="text-sm text-muted-foreground">
-                        {item.reservedBy.email}
+                        {item.reserved_by.email}
                       </div>
                     </div>
                   ) : (
@@ -82,15 +91,20 @@ const Admin = () => {
                   )}
                 </TableCell>
                 <TableCell>
-                  {item.status !== "Found" && (
+                  {item.status !== "Trouvé" && (
                     <Button
                       variant="outline"
-                      onClick={() => {
-                        updateItemStatus(item.id, "Found");
-                        toast.success("Item marked as found");
+                      onClick={async () => {
+                        try {
+                          await updateItemStatus(item.id, "Trouvé");
+                          toast.success("Objet marqué comme trouvé");
+                        } catch (error) {
+                          console.error(error);
+                          toast.error("Erreur lors de la mise à jour du statut");
+                        }
                       }}
                     >
-                      Mark as Found
+                      Marquer comme trouvé
                     </Button>
                   )}
                 </TableCell>
@@ -103,7 +117,7 @@ const Admin = () => {
       <Dialog open={isAddingItem} onOpenChange={setIsAddingItem}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add New Item</DialogTitle>
+            <DialogTitle>Ajouter un nouvel objet</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -120,21 +134,22 @@ const Admin = () => {
               />
             </div>
             <div>
-              <Label htmlFor="imageUrl">Image URL</Label>
+              <Label htmlFor="image">Image</Label>
               <Input
-                id="imageUrl"
-                value={newItem.imageUrl}
+                id="image"
+                type="file"
+                accept="image/*"
                 onChange={(e) =>
                   setNewItem((prev) => ({
                     ...prev,
-                    imageUrl: e.target.value,
+                    image: e.target.files?.[0] || null,
                   }))
                 }
               />
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={handleAddItem}>Add Item</Button>
+            <Button onClick={handleAddItem}>Ajouter l'objet</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

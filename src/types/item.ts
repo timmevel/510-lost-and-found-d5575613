@@ -6,8 +6,6 @@ export interface Item {
   image_url: string;
   status: ItemStatus;
   created_at: string;
-  reserved_by?: {
-    name: string;
-    email: string;
-  };
+  reserved_by_name?: string;
+  reserved_by_email?: string;
 }

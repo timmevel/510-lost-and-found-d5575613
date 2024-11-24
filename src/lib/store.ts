@@ -8,6 +8,7 @@ interface StoreState {
   addItem: (item: { description: string; image: File }) => Promise<void>;
   updateItemStatus: (id: string, status: ItemStatus) => Promise<void>;
   reserveItem: (id: string, name: string, email: string) => Promise<void>;
+  deleteItem: (id: string) => Promise<void>;
 }
 
 export const useStore = create<StoreState>((set) => ({
@@ -95,6 +96,16 @@ export const useStore = create<StoreState>((set) => ({
       },
     });
 
+    await useStore.getState().fetchItems();
+  },
+
+  deleteItem: async (id) => {
+    const { error } = await supabase
+      .from('items')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
     await useStore.getState().fetchItems();
   },
 }));

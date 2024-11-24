@@ -8,7 +8,7 @@ const NavBar = () => {
           <img 
             src="/510-logo.png" 
             alt="510 Training Club" 
-            className="h-8 w-auto object-contain"
+            className="h-8 w-auto object-contain py-2.5"
           />
         </Link>
       </div>

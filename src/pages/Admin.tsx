@@ -23,10 +23,12 @@ import {
 import { toast } from "sonner";
 import NavBar from "@/components/NavBar";
 import { ItemStatus } from "@/types/item";
+import ImageModal from "@/components/ImageModal";
 
 const Admin = () => {
-  const { items, fetchItems, updateItemStatus, addItem } = useStore();
+  const { items, fetchItems, updateItemStatus, addItem, deleteItem } = useStore();
   const [isAddingItem, setIsAddingItem] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [newItem, setNewItem] = useState({
     description: "",
     image: null as File | null,
@@ -67,12 +69,22 @@ const Admin = () => {
     }
   };
 
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteItem(id);
+      toast.success("Objet supprimé avec succès");
+    } catch (error) {
+      console.error(error);
+      toast.error("Erreur lors de la suppression de l'objet");
+    }
+  };
+
   return (
     <div>
       <NavBar />
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Tableau de bord administrateur</h1>
+          <h1 className="text-3xl font-bold">Admin</h1>
           <Button onClick={() => setIsAddingItem(true)}>Ajouter un objet</Button>
         </div>
 
@@ -94,7 +106,8 @@ const Admin = () => {
                     <img
                       src={item.image_url}
                       alt={item.description}
-                      className="w-16 h-16 object-cover rounded"
+                      className="w-16 h-16 object-cover rounded cursor-pointer"
+                      onClick={() => setSelectedImage(item.image_url)}
                     />
                   </TableCell>
                   <TableCell>{item.description}</TableCell>
@@ -126,14 +139,22 @@ const Admin = () => {
                     )}
                   </TableCell>
                   <TableCell>
-                    {item.status !== "Récupéré" && (
+                    <div className="space-x-2">
+                      {item.status !== "Récupéré" && (
+                        <Button
+                          variant="outline"
+                          onClick={() => handleStatusChange(item.id, "Récupéré")}
+                        >
+                          Marquer comme récupéré
+                        </Button>
+                      )}
                       <Button
-                        variant="outline"
-                        onClick={() => handleStatusChange(item.id, "Récupéré")}
+                        variant="destructive"
+                        onClick={() => handleDelete(item.id)}
                       >
-                        Marquer comme récupéré
+                        Supprimer
                       </Button>
-                    )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -180,6 +201,12 @@ const Admin = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <ImageModal
+          isOpen={!!selectedImage}
+          onClose={() => setSelectedImage(null)}
+          imageUrl={selectedImage || ""}
+        />
       </div>
     </div>
   );

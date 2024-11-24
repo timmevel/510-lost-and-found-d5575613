@@ -8,4 +8,7 @@ export interface Item {
   created_at: string;
   reserved_by_name: string | null;
   reserved_by_email: string | null;
+  retrieved_by_name: string | null;
+  retrieved_by_email: string | null;
+  is_archived: boolean;
 }

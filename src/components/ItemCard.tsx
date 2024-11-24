@@ -1,6 +1,8 @@
 import { Item } from "@/types/item";
 import { Button } from "./ui/button";
 import ItemCountdown from "./ItemCountdown";
+import { useState } from "react";
+import ImageModal from "./ImageModal";
 
 interface ItemCardProps {
   item: Item;
@@ -8,6 +10,7 @@ interface ItemCardProps {
 }
 
 const ItemCard = ({ item, onReserveClick }: ItemCardProps) => {
+  const [showImageModal, setShowImageModal] = useState(false);
   const daysLeft = 30 - Math.floor((new Date().getTime() - new Date(item.created_at).getTime()) / (1000 * 60 * 60 * 24));
 
   return (
@@ -15,7 +18,8 @@ const ItemCard = ({ item, onReserveClick }: ItemCardProps) => {
       <img
         src={item.image_url}
         alt={item.description}
-        className="w-full h-48 object-cover"
+        className="w-full h-48 object-cover cursor-pointer"
+        onClick={() => setShowImageModal(true)}
       />
       <div className="p-4">
         <div className="flex justify-between items-start mb-2">
@@ -44,6 +48,12 @@ const ItemCard = ({ item, onReserveClick }: ItemCardProps) => {
           </Button>
         )}
       </div>
+
+      <ImageModal
+        isOpen={showImageModal}
+        onClose={() => setShowImageModal(false)}
+        imageUrl={item.image_url}
+      />
     </div>
   );
 };

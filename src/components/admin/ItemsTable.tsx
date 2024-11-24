@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "../ui/select";
 import { Button } from "../ui/button";
-import { Trash2 } from "lucide-react";
+import { Trash2, Archive } from "lucide-react";
 import ImageModal from "../ImageModal";
 import ItemCountdown from "../ItemCountdown";
 import {
@@ -29,21 +29,50 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "../ui/dialog";
+import { Label } from "../ui/label";
+import { Input } from "../ui/input";
 
 interface ItemsTableProps {
   items: Item[];
-  onStatusChange: (id: string, status: ItemStatus) => Promise<void>;
+  onStatusChange: (id: string, status: ItemStatus, retrievedBy?: { name: string; email: string }) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
+  onArchive: (id: string) => Promise<void>;
+  showArchived?: boolean;
 }
 
-const ItemsTable = ({ items, onStatusChange, onDelete }: ItemsTableProps) => {
+const ItemsTable = ({ items, onStatusChange, onDelete, onArchive, showArchived = false }: ItemsTableProps) => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  const [itemToArchive, setItemToArchive] = useState<string | null>(null);
+  const [itemToMarkAsRetrieved, setItemToMarkAsRetrieved] = useState<string | null>(null);
+  const [retrievedBy, setRetrievedBy] = useState({ name: "", email: "" });
 
   const handleDelete = async () => {
     if (itemToDelete) {
       await onDelete(itemToDelete);
       setItemToDelete(null);
+    }
+  };
+
+  const handleArchive = async () => {
+    if (itemToArchive) {
+      await onArchive(itemToArchive);
+      setItemToArchive(null);
+    }
+  };
+
+  const handleMarkAsRetrieved = async () => {
+    if (itemToMarkAsRetrieved) {
+      await onStatusChange(itemToMarkAsRetrieved, "Récupéré", retrievedBy);
+      setItemToMarkAsRetrieved(null);
+      setRetrievedBy({ name: "", email: "" });
     }
   };
 
@@ -58,6 +87,7 @@ const ItemsTable = ({ items, onStatusChange, onDelete }: ItemsTableProps) => {
               <TableHead>Statut</TableHead>
               <TableHead>Délai</TableHead>
               <TableHead>Réservé par</TableHead>
+              <TableHead>Récupéré par</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -80,7 +110,9 @@ const ItemsTable = ({ items, onStatusChange, onDelete }: ItemsTableProps) => {
                   <Select
                     value={item.status}
                     onValueChange={(value: ItemStatus) =>
-                      onStatusChange(item.id, value)
+                      value === "Récupéré" 
+                        ? setItemToMarkAsRetrieved(item.id)
+                        : onStatusChange(item.id, value)
                     }
                   >
                     <SelectTrigger className="w-[180px]">
@@ -110,13 +142,35 @@ const ItemsTable = ({ items, onStatusChange, onDelete }: ItemsTableProps) => {
                   )}
                 </TableCell>
                 <TableCell>
+                  {item.retrieved_by_name ? (
+                    <div>
+                      <div>{item.retrieved_by_name}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {item.retrieved_by_email}
+                      </div>
+                    </div>
+                  ) : (
+                    "-"
+                  )}
+                </TableCell>
+                <TableCell>
                   <div className="space-x-2">
                     {item.status !== "Récupéré" && item.status !== "Expiré" && (
                       <Button
                         variant="outline"
-                        onClick={() => onStatusChange(item.id, "Récupéré")}
+                        onClick={() => setItemToMarkAsRetrieved(item.id)}
                       >
                         Marquer comme récupéré
+                      </Button>
+                    )}
+                    {(item.status === "Récupéré" || item.status === "Expiré") && !item.is_archived && (
+                      <Button
+                        variant="outline"
+                        onClick={() => setItemToArchive(item.id)}
+                        className="text-yellow-600 hover:text-yellow-700"
+                      >
+                        <Archive className="h-4 w-4 mr-2" />
+                        Archiver
                       </Button>
                     )}
                     <Button
@@ -160,6 +214,71 @@ const ItemsTable = ({ items, onStatusChange, onDelete }: ItemsTableProps) => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={!!itemToArchive} onOpenChange={() => setItemToArchive(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Archiver l'objet ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              L'objet sera archivé et n'apparaîtra plus dans la liste principale.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction onClick={handleArchive}>
+              Archiver
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={!!itemToMarkAsRetrieved} onOpenChange={() => {
+        setItemToMarkAsRetrieved(null);
+        setRetrievedBy({ name: "", email: "" });
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Qui a récupéré l'objet ?</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="name">Nom</Label>
+              <Input
+                id="name"
+                value={retrievedBy.name}
+                onChange={(e) =>
+                  setRetrievedBy((prev) => ({
+                    ...prev,
+                    name: e.target.value,
+                  }))
+                }
+              />
+            </div>
+            <div>
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={retrievedBy.email}
+                onChange={(e) =>
+                  setRetrievedBy((prev) => ({
+                    ...prev,
+                    email: e.target.value,
+                  }))
+                }
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={handleMarkAsRetrieved}
+              disabled={!retrievedBy.name || !retrievedBy.email}
+            >
+              Confirmer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

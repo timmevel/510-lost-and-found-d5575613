@@ -15,8 +15,11 @@ export type Database = {
           description: string
           id: string
           image_url: string
+          is_archived: boolean | null
           reserved_by_email: string | null
           reserved_by_name: string | null
+          retrieved_by_email: string | null
+          retrieved_by_name: string | null
           status: Database["public"]["Enums"]["item_status"] | null
         }
         Insert: {
@@ -24,8 +27,11 @@ export type Database = {
           description: string
           id?: string
           image_url: string
+          is_archived?: boolean | null
           reserved_by_email?: string | null
           reserved_by_name?: string | null
+          retrieved_by_email?: string | null
+          retrieved_by_name?: string | null
           status?: Database["public"]["Enums"]["item_status"] | null
         }
         Update: {
@@ -33,8 +39,11 @@ export type Database = {
           description?: string
           id?: string
           image_url?: string
+          is_archived?: boolean | null
           reserved_by_email?: string | null
           reserved_by_name?: string | null
+          retrieved_by_email?: string | null
+          retrieved_by_name?: string | null
           status?: Database["public"]["Enums"]["item_status"] | null
         }
         Relationships: [

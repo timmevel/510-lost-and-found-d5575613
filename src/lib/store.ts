@@ -7,9 +7,10 @@ interface StoreState {
   items: Item[];
   fetchItems: () => Promise<void>;
   addItem: (item: { description: string; image: File }) => Promise<void>;
-  updateItemStatus: (id: string, status: ItemStatus) => Promise<void>;
+  updateItemStatus: (id: string, status: ItemStatus, retrievedBy?: { name: string; email: string }) => Promise<void>;
   reserveItem: (id: string, name: string, email: string) => Promise<void>;
   deleteItem: (id: string) => Promise<void>;
+  archiveItem: (id: string) => Promise<void>;
 }
 
 export const useStore = create<StoreState>((set) => ({
@@ -81,10 +82,17 @@ export const useStore = create<StoreState>((set) => ({
     await useStore.getState().fetchItems();
   },
 
-  updateItemStatus: async (id, status) => {
+  updateItemStatus: async (id, status, retrievedBy) => {
+    const updateData: any = { status };
+    
+    if (retrievedBy) {
+      updateData.retrieved_by_name = retrievedBy.name;
+      updateData.retrieved_by_email = retrievedBy.email;
+    }
+
     const { error } = await supabase
       .from('items')
-      .update({ status })
+      .update(updateData)
       .eq('id', id);
 
     if (error) throw error;
@@ -129,6 +137,16 @@ export const useStore = create<StoreState>((set) => ({
     const { error } = await supabase
       .from('items')
       .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+    await useStore.getState().fetchItems();
+  },
+
+  archiveItem: async (id) => {
+    const { error } = await supabase
+      .from('items')
+      .update({ is_archived: true })
       .eq('id', id);
 
     if (error) throw error;

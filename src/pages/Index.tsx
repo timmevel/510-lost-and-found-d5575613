@@ -43,7 +43,7 @@ const Index = () => {
       await reserveItem(id, reservationData.name, reservationData.email);
       setSelectedItem(null);
       setReservationData({ name: "", email: "" });
-      toast.success("Objet réservé avec succès! Vous avez 7 jours pour le récupérer à la salle de sport.");
+      toast.success("Objet réservé avec succès ! Vous avez 7 jours pour le récupérer avant qu'il ne soit donné à une association.");
     } catch (error) {
       console.error(error);
       toast.error("Erreur lors de la réservation");
@@ -155,7 +155,7 @@ const Index = () => {
             <DialogHeader>
               <DialogTitle>Réserver l'objet</DialogTitle>
               <DialogDescription>
-                Veuillez fournir vos coordonnées pour réserver cet objet. Vous aurez 7 jours pour le récupérer à la salle de sport.
+                Veuillez fournir vos coordonnées pour réserver cet objet. Vous aurez ensuite 7 jours pour le récupérer à l'accueil.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">

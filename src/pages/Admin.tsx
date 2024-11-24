@@ -79,11 +79,11 @@ const Admin = () => {
                 <TableCell>{item.description}</TableCell>
                 <TableCell>{item.status}</TableCell>
                 <TableCell>
-                  {item.reserved_by ? (
+                  {item.reserved_by_name ? (
                     <div>
-                      <div>{item.reserved_by.name}</div>
+                      <div>{item.reserved_by_name}</div>
                       <div className="text-sm text-muted-foreground">
-                        {item.reserved_by.email}
+                        {item.reserved_by_email}
                       </div>
                     </div>
                   ) : (

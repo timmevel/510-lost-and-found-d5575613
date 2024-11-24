@@ -45,7 +45,7 @@ export const useStore = create<StoreState>((set) => ({
       .insert({
         description,
         image_url: publicUrl,
-        status: 'Perdu',
+        status: 'À récupérer',
       });
 
     if (error) throw error;

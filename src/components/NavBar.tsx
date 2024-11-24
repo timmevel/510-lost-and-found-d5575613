@@ -7,7 +7,7 @@ const NavBar = () => {
         <div className="flex justify-center items-center h-16">
           <Link to="/" className="py-[10px]">
             <img
-              src="/510-training-club-logo.png"
+              src="/510-logo.png"
               alt="510 Training Club"
               className="h-12 w-auto"
             />

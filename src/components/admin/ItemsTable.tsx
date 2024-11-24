@@ -16,7 +16,18 @@ import {
   SelectValue,
 } from "../ui/select";
 import { Button } from "../ui/button";
+import { Trash2 } from "lucide-react";
 import ImageModal from "../ImageModal";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../ui/alert-dialog";
 
 interface ItemsTableProps {
   items: Item[];
@@ -26,6 +37,14 @@ interface ItemsTableProps {
 
 const ItemsTable = ({ items, onStatusChange, onDelete }: ItemsTableProps) => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+
+  const handleDelete = async () => {
+    if (itemToDelete) {
+      await onDelete(itemToDelete);
+      setItemToDelete(null);
+    }
+  };
 
   return (
     <>
@@ -92,10 +111,12 @@ const ItemsTable = ({ items, onStatusChange, onDelete }: ItemsTableProps) => {
                       </Button>
                     )}
                     <Button
-                      variant="destructive"
-                      onClick={() => onDelete(item.id)}
+                      variant="ghost"
+                      size="icon"
+                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                      onClick={() => setItemToDelete(item.id)}
                     >
-                      Supprimer
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </TableCell>
@@ -110,6 +131,26 @@ const ItemsTable = ({ items, onStatusChange, onDelete }: ItemsTableProps) => {
         onClose={() => setSelectedImage(null)}
         imageUrl={selectedImage || ""}
       />
+
+      <AlertDialog open={!!itemToDelete} onOpenChange={() => setItemToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Cette action est irréversible. L'objet sera définitivement supprimé.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-red-500 hover:bg-red-700"
+            >
+              Supprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };

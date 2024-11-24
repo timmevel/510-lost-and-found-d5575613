@@ -23,7 +23,7 @@ const ItemCountdown = ({ createdAt, variant = "default" }: ItemCountdownProps) =
   return (
     <div className="flex items-center gap-1">
       <span className={`text-sm ${getCountdownColor()}`}>
-        {daysLeft > 0 ? `${daysLeft} jours restants` : "Expiré"}
+        {daysLeft === 1 ? "1 jour restant" : (daysLeft > 1 ? `${daysLeft} jours restants` : "Expiré")}
       </span>
       {variant === "default" && (
         <Tooltip>

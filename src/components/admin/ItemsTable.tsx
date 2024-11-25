@@ -38,6 +38,17 @@ import {
 } from "../ui/dialog";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
+import { Form, FormField, FormItem, FormControl, FormMessage } from "../ui/form";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+const retrievedBySchema = z.object({
+  name: z.string().min(1, "Le nom est requis"),
+  email: z.string().email("Email invalide").optional().or(z.literal("")),
+});
+
+type RetrievedByFormData = z.infer<typeof retrievedBySchema>;
 
 interface ItemsTableProps {
   items: Item[];
@@ -52,7 +63,14 @@ const ItemsTable = ({ items, onStatusChange, onDelete, onArchive, showArchived =
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [itemToArchive, setItemToArchive] = useState<string | null>(null);
   const [itemToMarkAsRetrieved, setItemToMarkAsRetrieved] = useState<string | null>(null);
-  const [retrievedBy, setRetrievedBy] = useState({ name: "", email: "" });
+
+  const form = useForm<RetrievedByFormData>({
+    resolver: zodResolver(retrievedBySchema),
+    defaultValues: {
+      name: "",
+      email: "",
+    },
+  });
 
   const handleDelete = async () => {
     if (itemToDelete) {
@@ -68,11 +86,14 @@ const ItemsTable = ({ items, onStatusChange, onDelete, onArchive, showArchived =
     }
   };
 
-  const handleMarkAsRetrieved = async () => {
+  const handleMarkAsRetrieved = async (data: RetrievedByFormData) => {
     if (itemToMarkAsRetrieved) {
-      await onStatusChange(itemToMarkAsRetrieved, "Récupéré", retrievedBy);
+      await onStatusChange(itemToMarkAsRetrieved, "Récupéré", {
+        name: data.name,
+        email: data.email || "",
+      });
       setItemToMarkAsRetrieved(null);
-      setRetrievedBy({ name: "", email: "" });
+      form.reset();
     }
   };
 
@@ -232,51 +253,51 @@ const ItemsTable = ({ items, onStatusChange, onDelete, onArchive, showArchived =
         </AlertDialogContent>
       </AlertDialog>
 
-      <Dialog open={!!itemToMarkAsRetrieved} onOpenChange={() => {
-        setItemToMarkAsRetrieved(null);
-        setRetrievedBy({ name: "", email: "" });
+      <Dialog open={!!itemToMarkAsRetrieved} onOpenChange={(open) => {
+        if (!open) {
+          setItemToMarkAsRetrieved(null);
+          form.reset();
+        }
       }}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Qui a récupéré l'objet ?</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="name">Nom</Label>
-              <Input
-                id="name"
-                value={retrievedBy.name}
-                onChange={(e) =>
-                  setRetrievedBy((prev) => ({
-                    ...prev,
-                    name: e.target.value,
-                  }))
-                }
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleMarkAsRetrieved)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <Label>Nom</Label>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={retrievedBy.email}
-                onChange={(e) =>
-                  setRetrievedBy((prev) => ({
-                    ...prev,
-                    email: e.target.value,
-                  }))
-                }
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <Label>Email (optionnel)</Label>
+                    <FormControl>
+                      <Input type="email" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              onClick={handleMarkAsRetrieved}
-              disabled={!retrievedBy.name || !retrievedBy.email}
-            >
-              Confirmer
-            </Button>
-          </DialogFooter>
+              <DialogFooter>
+                <Button type="submit">
+                  Confirmer
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
     </>

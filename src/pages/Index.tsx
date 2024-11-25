@@ -65,9 +65,9 @@ const Index = () => {
   };
 
   return (
-    <div>
+    <div className="min-h-screen flex flex-col">
       <NavBar />
-      <div className="container mx-auto px-4 mt-[10px]">
+      <div className="container mx-auto px-4 mt-[10px] flex-grow">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">Objets trouvés</h1>
           <Button onClick={handleAdminAccess} variant="outline">
@@ -164,6 +164,9 @@ const Index = () => {
           </DialogContent>
         </Dialog>
       </div>
+      <footer className="py-4 text-center text-sm text-gray-600">
+        Made with ❤️ by Tim.
+      </footer>
     </div>
   );
 };

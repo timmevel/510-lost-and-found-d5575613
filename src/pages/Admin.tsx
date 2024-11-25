@@ -5,7 +5,6 @@ import NavBar from "@/components/NavBar";
 import AdminHeader from "@/components/admin/AdminHeader";
 import ItemsTable from "@/components/admin/ItemsTable";
 import AddItemDialog from "@/components/admin/AddItemDialog";
-import { Button } from "@/components/ui/button";
 
 const Admin = () => {
   const { items, fetchItems, updateItemStatus, addItem, deleteItem, archiveItem } = useStore();
@@ -59,18 +58,10 @@ const Admin = () => {
   const filteredItems = items.filter(item => item.is_archived === showArchived);
 
   return (
-    <div>
+    <div className="min-h-screen flex flex-col">
       <NavBar />
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <AdminHeader onAddClick={() => setIsAddingItem(true)} />
-          <Button
-            variant="outline"
-            onClick={() => setShowArchived(!showArchived)}
-          >
-            {showArchived ? "Voir les objets actifs" : "Voir les objets archivés"}
-          </Button>
-        </div>
+      <div className="container mx-auto px-4 py-8 flex-grow">
+        <AdminHeader onAddClick={() => setIsAddingItem(true)} />
         <ItemsTable
           items={filteredItems}
           onStatusChange={handleStatusChange}
@@ -78,12 +69,23 @@ const Admin = () => {
           onArchive={handleArchive}
           showArchived={showArchived}
         />
+        <div className="mt-4 text-center">
+          <button
+            onClick={() => setShowArchived(!showArchived)}
+            className="text-blue-600 hover:text-blue-800 underline text-sm"
+          >
+            {showArchived ? "Voir les objets actifs" : "Voir les objets archivés"}
+          </button>
+        </div>
         <AddItemDialog
           isOpen={isAddingItem}
           onClose={() => setIsAddingItem(false)}
           onAdd={handleAddItem}
         />
       </div>
+      <footer className="py-4 text-center text-sm text-gray-600">
+        Made with ❤️ by Tim.
+      </footer>
     </div>
   );
 };

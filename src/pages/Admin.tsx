@@ -12,7 +12,11 @@ const Admin = () => {
   const [showArchived, setShowArchived] = useState(false);
 
   useEffect(() => {
+    document.title = "Admin - Objets trouvés - 510 Training Club";
     fetchItems().catch(console.error);
+    return () => {
+      document.title = "Objets trouvés - 510 Training Club";
+    };
   }, [fetchItems]);
 
   const handleAddItem = async (item: { description: string; image: File }) => {
@@ -84,7 +88,7 @@ const Admin = () => {
         />
       </div>
       <footer className="py-4 text-center text-sm text-gray-600">
-        Made with ❤️ by Tim.
+        Made with ❤️ by <a href="https://510.training" target="_blank" rel="noopener noreferrer" className="hover:underline">510 Training</a>.
       </footer>
     </div>
   );

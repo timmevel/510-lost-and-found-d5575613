@@ -165,7 +165,7 @@ const Index = () => {
         </Dialog>
       </div>
       <footer className="py-4 text-center text-sm text-gray-600">
-        Made with ❤️ by Tim.
+        Made with ❤️ by <a href="https://510.training" target="_blank" rel="noopener noreferrer" className="hover:underline">510 Training</a>.
       </footer>
     </div>
   );

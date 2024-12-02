@@ -1,32 +1,11 @@
 import { useState } from "react";
 import { Item, ItemStatus } from "@/types/item";
 import Fuse from "fuse.js";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../ui/table";
+import { Table } from "../ui/table";
 import SearchBar from "./SearchBar";
-import SortableTableHeader from "./SortableTableHeader";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "../ui/alert-dialog";
-import ItemCountdown from "../ItemCountdown";
-import ItemImage from "./table/ItemImage";
-import ItemStatusButton from "./table/ItemStatusButton";
-import UserInfo from "./table/UserInfo";
-import ItemActions from "./table/ItemActions";
 import ItemFilters from "./table/ItemFilters";
+import ItemsTableContent from "./table/ItemsTableContent";
+import ItemAlertDialogs from "./table/ItemAlertDialogs";
 
 interface ItemsTableProps {
   items: Item[];
@@ -107,113 +86,26 @@ const ItemsTable = ({ items, onStatusChange, onDelete, onArchive, showArchived =
       </div>
       <div className="rounded-md border">
         <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Image</TableHead>
-              <SortableTableHeader
-                column="description"
-                label="Description"
-                currentSort={sort}
-                onSort={handleSort}
-              />
-              <SortableTableHeader
-                column="status"
-                label="Statut"
-                currentSort={sort}
-                onSort={handleSort}
-              />
-              <TableHead>Délai</TableHead>
-              <SortableTableHeader
-                column="reserved_by_name"
-                label="Réservé par"
-                currentSort={sort}
-                onSort={handleSort}
-              />
-              <SortableTableHeader
-                column="retrieved_by_name"
-                label="Récupéré par"
-                currentSort={sort}
-                onSort={handleSort}
-              />
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortedItems.map((item) => (
-              <TableRow
-                key={item.id}
-                className={item.status === "Expiré" ? "bg-red-50" : undefined}
-              >
-                <TableCell>
-                  <ItemImage imageUrl={item.image_url} description={item.description} />
-                </TableCell>
-                <TableCell>{item.description}</TableCell>
-                <TableCell>
-                  <ItemStatusButton
-                    status={item.status}
-                    onStatusChange={(newStatus) => onStatusChange(item.id, newStatus)}
-                  />
-                </TableCell>
-                <TableCell>
-                  <ItemCountdown createdAt={item.created_at} variant="admin" />
-                </TableCell>
-                <TableCell>
-                  <UserInfo name={item.reserved_by_name} email={item.reserved_by_email} />
-                </TableCell>
-                <TableCell>
-                  <UserInfo name={item.retrieved_by_name} email={item.retrieved_by_email} />
-                </TableCell>
-                <TableCell>
-                  <ItemActions
-                    status={item.status}
-                    isArchived={item.is_archived}
-                    onMarkAsRetrieved={() => setItemToMarkAsRetrieved(item.id)}
-                    onArchive={() => setItemToArchive(item.id)}
-                    onDelete={() => setItemToDelete(item.id)}
-                  />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
+          <ItemsTableContent
+            items={sortedItems}
+            sort={sort}
+            onSort={handleSort}
+            onStatusChange={onStatusChange}
+            onMarkAsRetrieved={setItemToMarkAsRetrieved}
+            onArchive={setItemToArchive}
+            onDelete={setItemToDelete}
+          />
         </Table>
       </div>
 
-      <AlertDialog open={!!itemToDelete} onOpenChange={() => setItemToDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Êtes-vous sûr ?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Cette action est irréversible. L'objet sera définitivement supprimé.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-red-500 hover:bg-red-700"
-            >
-              Supprimer
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog open={!!itemToArchive} onOpenChange={() => setItemToArchive(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Archiver l'objet ?</AlertDialogTitle>
-            <AlertDialogDescription>
-              L'objet sera archivé et n'apparaîtra plus dans la liste principale.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction onClick={handleArchive}>
-              Archiver
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ItemAlertDialogs
+        itemToDelete={itemToDelete}
+        itemToArchive={itemToArchive}
+        onDeleteCancel={() => setItemToDelete(null)}
+        onArchiveCancel={() => setItemToArchive(null)}
+        onDeleteConfirm={handleDelete}
+        onArchiveConfirm={handleArchive}
+      />
     </>
   );
 };

@@ -151,7 +151,7 @@ const ItemsTable = ({ items, onStatusChange, onDelete, onArchive, showArchived =
                 <TableCell>
                   <ItemStatusButton
                     status={item.status}
-                    onStatusChange={() => onStatusChange(item.id, item.status === "À récupérer" ? "Réservé" : "À récupérer")}
+                    onStatusChange={(newStatus) => onStatusChange(item.id, newStatus)}
                   />
                 </TableCell>
                 <TableCell>

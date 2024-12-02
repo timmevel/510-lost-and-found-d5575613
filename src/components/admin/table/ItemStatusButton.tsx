@@ -1,20 +1,33 @@
-import { Button } from "../../ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../ui/select";
 import type { ItemStatus } from "@/types/item";
 
 interface ItemStatusButtonProps {
   status: ItemStatus;
-  onStatusChange: () => void;
+  onStatusChange: (status: ItemStatus) => void;
 }
 
 const ItemStatusButton = ({ status, onStatusChange }: ItemStatusButtonProps) => {
   return (
-    <Button
-      variant="outline"
-      onClick={onStatusChange}
-      className="w-full"
+    <Select
+      value={status}
+      onValueChange={(value: ItemStatus) => onStatusChange(value)}
     >
-      {status}
-    </Button>
+      <SelectTrigger className="w-full">
+        <SelectValue placeholder={status} />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="À récupérer">À récupérer</SelectItem>
+        <SelectItem value="Réservé">Réservé</SelectItem>
+        <SelectItem value="Récupéré">Récupéré</SelectItem>
+        <SelectItem value="Expiré">Expiré</SelectItem>
+      </SelectContent>
+    </Select>
   );
 };
 

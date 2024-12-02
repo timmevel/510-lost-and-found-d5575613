@@ -23,7 +23,7 @@ import {
 } from "../ui/alert-dialog";
 import ItemCountdown from "../ItemCountdown";
 import ItemImage from "./table/ItemImage";
-import ItemStatus from "./table/ItemStatus";
+import ItemStatusButton from "./table/ItemStatusButton";
 import UserInfo from "./table/UserInfo";
 import ItemActions from "./table/ItemActions";
 
@@ -140,7 +140,7 @@ const ItemsTable = ({ items, onStatusChange, onDelete, onArchive, showArchived =
                 </TableCell>
                 <TableCell>{item.description}</TableCell>
                 <TableCell>
-                  <ItemStatus
+                  <ItemStatusButton
                     status={item.status}
                     onStatusChange={() => onStatusChange(item.id, item.status === "À récupérer" ? "Réservé" : "À récupérer")}
                   />

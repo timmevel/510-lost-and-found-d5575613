@@ -8,7 +8,7 @@ interface ItemFiltersProps {
 
 const ItemFilters = ({ currentFilter, onFilterChange }: ItemFiltersProps) => {
   return (
-    <div className="flex gap-2 mb-4">
+    <div className="flex gap-2 mb-6">
       <Button
         variant={currentFilter === "all" ? "default" : "outline"}
         onClick={() => onFilterChange("all")}

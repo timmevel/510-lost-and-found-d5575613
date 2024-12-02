@@ -26,6 +26,7 @@ import ItemImage from "./table/ItemImage";
 import ItemStatusButton from "./table/ItemStatusButton";
 import UserInfo from "./table/UserInfo";
 import ItemActions from "./table/ItemActions";
+import ItemFilters from "./table/ItemFilters";
 
 interface ItemsTableProps {
   items: Item[];
@@ -41,6 +42,7 @@ const ItemsTable = ({ items, onStatusChange, onDelete, onArchive, showArchived =
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [itemToArchive, setItemToArchive] = useState<string | null>(null);
   const [itemToMarkAsRetrieved, setItemToMarkAsRetrieved] = useState<string | null>(null);
+  const [currentFilter, setCurrentFilter] = useState<ItemStatus | "all">("all");
 
   const fuse = new Fuse(items, {
     keys: ["description", "reserved_by_name", "reserved_by_email", "retrieved_by_name", "retrieved_by_email"],
@@ -77,7 +79,11 @@ const ItemsTable = ({ items, onStatusChange, onDelete, onArchive, showArchived =
     ? fuse.search(search).map(result => result.item)
     : items.filter(item => item.status !== "Expiré");
 
-  const sortedItems = sortItems(filteredItems);
+  const filteredByStatus = currentFilter === "all" 
+    ? filteredItems 
+    : filteredItems.filter(item => item.status === currentFilter);
+
+  const sortedItems = sortItems(filteredByStatus);
 
   const handleDelete = async () => {
     if (itemToDelete) {
@@ -95,7 +101,10 @@ const ItemsTable = ({ items, onStatusChange, onDelete, onArchive, showArchived =
 
   return (
     <>
-      <SearchBar value={search} onChange={setSearch} />
+      <div className="space-y-4">
+        <SearchBar value={search} onChange={setSearch} />
+        <ItemFilters currentFilter={currentFilter} onFilterChange={setCurrentFilter} />
+      </div>
       <div className="rounded-md border">
         <Table>
           <TableHeader>

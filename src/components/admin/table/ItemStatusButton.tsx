@@ -1,12 +1,12 @@
 import { Button } from "../../ui/button";
-import { ItemStatus } from "@/types/item";
+import type { ItemStatus } from "@/types/item";
 
-interface ItemStatusProps {
+interface ItemStatusButtonProps {
   status: ItemStatus;
   onStatusChange: () => void;
 }
 
-const ItemStatus = ({ status, onStatusChange }: ItemStatusProps) => {
+const ItemStatusButton = ({ status, onStatusChange }: ItemStatusButtonProps) => {
   return (
     <Button
       variant="outline"
@@ -18,4 +18,4 @@ const ItemStatus = ({ status, onStatusChange }: ItemStatusProps) => {
   );
 };
 
-export default ItemStatus;
+export default ItemStatusButton;

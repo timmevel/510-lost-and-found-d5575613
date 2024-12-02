@@ -36,8 +36,8 @@
 
     /* Modern status colors */
     --status-lost: 24 100% 50%;     /* A vibrant orange */
-    --status-reserved: 265 89% 78%; /* A soft purple */
-    --status-found: 168 47% 45%;    /* A muted teal */
+    --status-reserved: 142 72% 29%; /* A modern green */
+    --status-found: 48 96% 53%;    /* A modern yellow */
   }
 }
  

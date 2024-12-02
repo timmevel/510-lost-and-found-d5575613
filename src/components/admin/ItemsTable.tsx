@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Item, ItemStatus } from "@/types/item";
+import Fuse from "fuse.js";
 import {
   Table,
   TableBody,
@@ -8,17 +9,8 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
-import { Button } from "../ui/button";
-import { Trash2, Archive } from "lucide-react";
-import ImageModal from "../ImageModal";
-import ItemCountdown from "../ItemCountdown";
+import SearchBar from "./SearchBar";
+import SortableTableHeader from "./SortableTableHeader";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,26 +21,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../ui/alert-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "../ui/dialog";
-import { Label } from "../ui/label";
-import { Input } from "../ui/input";
-import { Form, FormField, FormItem, FormControl, FormMessage } from "../ui/form";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-
-const retrievedBySchema = z.object({
-  name: z.string().min(1, "Le nom est requis"),
-  email: z.string().email("Email invalide").optional().or(z.literal("")),
-});
-
-type RetrievedByFormData = z.infer<typeof retrievedBySchema>;
+import ImageModal from "../ImageModal";
+import ItemCountdown from "../ItemCountdown";
+import { Button } from "../ui/button";
 
 interface ItemsTableProps {
   items: Item[];
@@ -59,18 +34,49 @@ interface ItemsTableProps {
 }
 
 const ItemsTable = ({ items, onStatusChange, onDelete, onArchive, showArchived = false }: ItemsTableProps) => {
+  const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<{ column: string; direction: 'asc' | 'desc' } | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [itemToArchive, setItemToArchive] = useState<string | null>(null);
   const [itemToMarkAsRetrieved, setItemToMarkAsRetrieved] = useState<string | null>(null);
 
-  const form = useForm<RetrievedByFormData>({
-    resolver: zodResolver(retrievedBySchema),
-    defaultValues: {
-      name: "",
-      email: "",
-    },
+  const fuse = new Fuse(items, {
+    keys: ["description", "reserved_by_name", "reserved_by_email", "retrieved_by_name", "retrieved_by_email"],
+    threshold: 0.3,
   });
+
+  const handleSort = (column: string) => {
+    if (sort?.column === column) {
+      setSort(prev => prev ? {
+        column,
+        direction: prev.direction === 'asc' ? 'desc' : 'asc'
+      } : { column, direction: 'asc' });
+    } else {
+      setSort({ column, direction: 'asc' });
+    }
+  };
+
+  const sortItems = (items: Item[]) => {
+    if (!sort) return items;
+
+    return [...items].sort((a: any, b: any) => {
+      const aValue = a[sort.column];
+      const bValue = b[sort.column];
+
+      if (aValue === null) return 1;
+      if (bValue === null) return -1;
+
+      const comparison = aValue.localeCompare(bValue);
+      return sort.direction === 'asc' ? comparison : -comparison;
+    });
+  };
+
+  const filteredItems = search
+    ? fuse.search(search).map(result => result.item)
+    : items.filter(item => item.status !== "Expiré");
+
+  const sortedItems = sortItems(filteredItems);
 
   const handleDelete = async () => {
     if (itemToDelete) {
@@ -86,35 +92,45 @@ const ItemsTable = ({ items, onStatusChange, onDelete, onArchive, showArchived =
     }
   };
 
-  const handleMarkAsRetrieved = async (data: RetrievedByFormData) => {
-    if (itemToMarkAsRetrieved) {
-      await onStatusChange(itemToMarkAsRetrieved, "Récupéré", {
-        name: data.name,
-        email: data.email || "",
-      });
-      setItemToMarkAsRetrieved(null);
-      form.reset();
-    }
-  };
-
   return (
     <>
+      <SearchBar value={search} onChange={setSearch} />
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Image</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Statut</TableHead>
+              <SortableTableHeader
+                column="description"
+                label="Description"
+                currentSort={sort}
+                onSort={handleSort}
+              />
+              <SortableTableHeader
+                column="status"
+                label="Statut"
+                currentSort={sort}
+                onSort={handleSort}
+              />
               <TableHead>Délai</TableHead>
-              <TableHead>Réservé par</TableHead>
-              <TableHead>Récupéré par</TableHead>
+              <SortableTableHeader
+                column="reserved_by_name"
+                label="Réservé par"
+                currentSort={sort}
+                onSort={handleSort}
+              />
+              <SortableTableHeader
+                column="retrieved_by_name"
+                label="Récupéré par"
+                currentSort={sort}
+                onSort={handleSort}
+              />
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {items.map((item) => (
-              <TableRow 
+            {sortedItems.map((item) => (
+              <TableRow
                 key={item.id}
                 className={item.status === "Expiré" ? "bg-red-50" : undefined}
               >
@@ -128,24 +144,13 @@ const ItemsTable = ({ items, onStatusChange, onDelete, onArchive, showArchived =
                 </TableCell>
                 <TableCell>{item.description}</TableCell>
                 <TableCell>
-                  <Select
-                    value={item.status}
-                    onValueChange={(value: ItemStatus) =>
-                      value === "Récupéré" 
-                        ? setItemToMarkAsRetrieved(item.id)
-                        : onStatusChange(item.id, value)
-                    }
+                  <Button
+                    variant="outline"
+                    onClick={() => onStatusChange(item.id, item.status === "À récupérer" ? "Réservé" : "À récupérer")}
+                    className="w-full"
                   >
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Changer le statut" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="À récupérer">À récupérer</SelectItem>
-                      <SelectItem value="Réservé">Réservé</SelectItem>
-                      <SelectItem value="Récupéré">Récupéré</SelectItem>
-                      <SelectItem value="Expiré">Expiré</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    {item.status}
+                  </Button>
                 </TableCell>
                 <TableCell>
                   <ItemCountdown createdAt={item.created_at} variant="admin" />
@@ -190,7 +195,6 @@ const ItemsTable = ({ items, onStatusChange, onDelete, onArchive, showArchived =
                         onClick={() => setItemToArchive(item.id)}
                         className="text-yellow-600 hover:text-yellow-700"
                       >
-                        <Archive className="h-4 w-4 mr-2" />
                         Archiver
                       </Button>
                     )}
@@ -200,7 +204,7 @@ const ItemsTable = ({ items, onStatusChange, onDelete, onArchive, showArchived =
                       className="text-red-500 hover:text-red-700 hover:bg-red-50"
                       onClick={() => setItemToDelete(item.id)}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      Supprimer
                     </Button>
                   </div>
                 </TableCell>
@@ -252,54 +256,6 @@ const ItemsTable = ({ items, onStatusChange, onDelete, onArchive, showArchived =
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <Dialog open={!!itemToMarkAsRetrieved} onOpenChange={(open) => {
-        if (!open) {
-          setItemToMarkAsRetrieved(null);
-          form.reset();
-        }
-      }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Qui a récupéré l'objet ?</DialogTitle>
-          </DialogHeader>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleMarkAsRetrieved)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <Label>Nom</Label>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <Label>Email (optionnel)</Label>
-                    <FormControl>
-                      <Input type="email" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <DialogFooter>
-                <Button type="submit">
-                  Confirmer
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
     </>
   );
 };

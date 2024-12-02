@@ -14,6 +14,52 @@ interface StoreState {
   archiveItem: (id: string) => Promise<void>;
 }
 
+const optimizeImage = async (file: File): Promise<File> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    img.onload = () => {
+      let width = img.width;
+      let height = img.height;
+      const maxSize = 1200;
+      
+      if (width > height && width > maxSize) {
+        height = (height * maxSize) / width;
+        width = maxSize;
+      } else if (height > maxSize) {
+        width = (width * maxSize) / height;
+        height = maxSize;
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+      
+      ctx?.drawImage(img, 0, 0, width, height);
+      
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            reject(new Error('Failed to create blob'));
+            return;
+          }
+          const optimizedFile = new File([blob], file.name, {
+            type: 'image/jpeg',
+            lastModified: Date.now(),
+          });
+          resolve(optimizedFile);
+        },
+        'image/jpeg',
+        0.8  
+      );
+    };
+    
+    img.onerror = () => reject(new Error('Failed to load image'));
+    img.src = URL.createObjectURL(file);
+  });
+};
+
 export const useStore = create<StoreState>((set) => ({
   items: [],
   
@@ -28,12 +74,10 @@ export const useStore = create<StoreState>((set) => ({
     
     if (error) throw error;
 
-    // Update expired items
     const updatedItems = data?.map(item => {
       if (item.status === "À récupérer") {
         const daysLeft = 30 - differenceInDays(new Date(), new Date(item.created_at || ''));
         if (daysLeft <= 0) {
-          // Update item status in database
           void supabase
             .from('items')
             .update({ status: "Expiré" })
@@ -49,22 +93,21 @@ export const useStore = create<StoreState>((set) => ({
   },
 
   addItem: async ({ description, image }) => {
-    // Upload image first
-    const fileExt = image.name.split('.').pop();
+    const optimizedImage = await optimizeImage(image);
+    
+    const fileExt = 'jpg'; 
     const filePath = `${crypto.randomUUID()}.${fileExt}`;
     
     const { error: uploadError } = await supabase.storage
       .from('items')
-      .upload(filePath, image);
+      .upload(filePath, optimizedImage);
       
     if (uploadError) throw uploadError;
 
-    // Get the public URL
     const { data: { publicUrl } } = supabase.storage
       .from('items')
       .getPublicUrl(filePath);
 
-    // Create item
     const { error } = await supabase
       .from('items')
       .insert({
@@ -75,7 +118,6 @@ export const useStore = create<StoreState>((set) => ({
 
     if (error) throw error;
     
-    // Refresh items
     await useStore.getState().fetchItems();
   },
 
@@ -97,7 +139,6 @@ export const useStore = create<StoreState>((set) => ({
   },
 
   reserveItem: async (id, name, email) => {
-    // Get item description for email
     const { data: item } = await supabase
       .from('items')
       .select('description')
@@ -106,7 +147,6 @@ export const useStore = create<StoreState>((set) => ({
 
     if (!item) throw new Error('Item not found');
 
-    // Update item status
     const { error } = await supabase
       .from('items')
       .update({
@@ -118,7 +158,6 @@ export const useStore = create<StoreState>((set) => ({
 
     if (error) throw error;
 
-    // Send email notification
     await supabase.functions.invoke('send-reservation-email', {
       body: {
         itemDescription: item.description,

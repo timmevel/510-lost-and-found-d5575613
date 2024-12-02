@@ -33,7 +33,7 @@ const Index = () => {
     : items;
 
   const displayedItems = filteredItems.filter(item => {
-    if (item.status === "Récupéré") return false;
+    if (item.status === "Expiré" || item.status === "Récupéré") return false;
     if (statusFilter === "all") return true;
     return item.status === statusFilter;
   });

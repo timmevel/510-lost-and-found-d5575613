@@ -26,11 +26,11 @@ const ItemCard = ({ item, onReserveClick }: ItemCardProps) => {
           <span
             className={`${
               item.status === "À récupérer"
-                ? "bg-green-500"
+                ? "bg-teal-500"
                 : item.status === "Réservé"
-                ? "bg-yellow-500"
+                ? "bg-purple-500"
                 : item.status === "Expiré"
-                ? "bg-red-500"
+                ? "bg-orange-500"
                 : "bg-blue-500"
             } text-white px-2 py-1 rounded-full text-sm`}
           >
@@ -38,7 +38,7 @@ const ItemCard = ({ item, onReserveClick }: ItemCardProps) => {
           </span>
           <ItemCountdown createdAt={item.created_at} />
         </div>
-        <p className="text-lg mb-4">{item.description}</p>
+        <p className="text-lg mb-4 line-clamp-2 min-h-[3.5rem]">{item.description}</p>
         {item.status === "À récupérer" && daysLeft > 0 && (
           <Button
             onClick={() => onReserveClick(item.id)}

@@ -21,9 +21,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../ui/alert-dialog";
-import ImageModal from "../ImageModal";
 import ItemCountdown from "../ItemCountdown";
-import { Button } from "../ui/button";
+import ItemImage from "./table/ItemImage";
+import ItemStatus from "./table/ItemStatus";
+import UserInfo from "./table/UserInfo";
+import ItemActions from "./table/ItemActions";
 
 interface ItemsTableProps {
   items: Item[];
@@ -36,7 +38,6 @@ interface ItemsTableProps {
 const ItemsTable = ({ items, onStatusChange, onDelete, onArchive, showArchived = false }: ItemsTableProps) => {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<{ column: string; direction: 'asc' | 'desc' } | null>(null);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [itemToArchive, setItemToArchive] = useState<string | null>(null);
   const [itemToMarkAsRetrieved, setItemToMarkAsRetrieved] = useState<string | null>(null);
@@ -135,90 +136,38 @@ const ItemsTable = ({ items, onStatusChange, onDelete, onArchive, showArchived =
                 className={item.status === "Expiré" ? "bg-red-50" : undefined}
               >
                 <TableCell>
-                  <img
-                    src={item.image_url}
-                    alt={item.description}
-                    className="w-16 h-16 object-cover rounded cursor-pointer"
-                    onClick={() => setSelectedImage(item.image_url)}
-                  />
+                  <ItemImage imageUrl={item.image_url} description={item.description} />
                 </TableCell>
                 <TableCell>{item.description}</TableCell>
                 <TableCell>
-                  <Button
-                    variant="outline"
-                    onClick={() => onStatusChange(item.id, item.status === "À récupérer" ? "Réservé" : "À récupérer")}
-                    className="w-full"
-                  >
-                    {item.status}
-                  </Button>
+                  <ItemStatus
+                    status={item.status}
+                    onStatusChange={() => onStatusChange(item.id, item.status === "À récupérer" ? "Réservé" : "À récupérer")}
+                  />
                 </TableCell>
                 <TableCell>
                   <ItemCountdown createdAt={item.created_at} variant="admin" />
                 </TableCell>
                 <TableCell>
-                  {item.reserved_by_name ? (
-                    <div>
-                      <div>{item.reserved_by_name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {item.reserved_by_email}
-                      </div>
-                    </div>
-                  ) : (
-                    "-"
-                  )}
+                  <UserInfo name={item.reserved_by_name} email={item.reserved_by_email} />
                 </TableCell>
                 <TableCell>
-                  {item.retrieved_by_name ? (
-                    <div>
-                      <div>{item.retrieved_by_name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {item.retrieved_by_email}
-                      </div>
-                    </div>
-                  ) : (
-                    "-"
-                  )}
+                  <UserInfo name={item.retrieved_by_name} email={item.retrieved_by_email} />
                 </TableCell>
                 <TableCell>
-                  <div className="space-x-2">
-                    {item.status !== "Récupéré" && item.status !== "Expiré" && (
-                      <Button
-                        variant="outline"
-                        onClick={() => setItemToMarkAsRetrieved(item.id)}
-                      >
-                        Marquer comme récupéré
-                      </Button>
-                    )}
-                    {(item.status === "Récupéré" || item.status === "Expiré") && !item.is_archived && (
-                      <Button
-                        variant="outline"
-                        onClick={() => setItemToArchive(item.id)}
-                        className="text-yellow-600 hover:text-yellow-700"
-                      >
-                        Archiver
-                      </Button>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                      onClick={() => setItemToDelete(item.id)}
-                    >
-                      Supprimer
-                    </Button>
-                  </div>
+                  <ItemActions
+                    status={item.status}
+                    isArchived={item.is_archived}
+                    onMarkAsRetrieved={() => setItemToMarkAsRetrieved(item.id)}
+                    onArchive={() => setItemToArchive(item.id)}
+                    onDelete={() => setItemToDelete(item.id)}
+                  />
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
-
-      <ImageModal
-        isOpen={!!selectedImage}
-        onClose={() => setSelectedImage(null)}
-        imageUrl={selectedImage || ""}
-      />
 
       <AlertDialog open={!!itemToDelete} onOpenChange={() => setItemToDelete(null)}>
         <AlertDialogContent>

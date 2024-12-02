@@ -35,9 +35,9 @@
     --radius: 0.5rem;
 
     /* Modern status colors */
-    --status-lost: 15 80% 50%;     /* A more vibrant orange-red */
-    --status-reserved: 250 60% 50%; /* A softer purple */
-    --status-found: 160 60% 40%;    /* A more muted teal */
+    --status-lost: 24 100% 50%;     /* A vibrant orange */
+    --status-reserved: 265 89% 78%; /* A soft purple */
+    --status-found: 168 47% 45%;    /* A muted teal */
   }
 }
  

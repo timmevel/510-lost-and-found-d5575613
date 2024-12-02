@@ -4,6 +4,7 @@ export interface Item {
   id: string;
   description: string;
   image_url: string;
+  thumbnail_url?: string;
   status: ItemStatus;
   created_at: string;
   reserved_by_name: string | null;

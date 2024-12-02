@@ -14,6 +14,52 @@ interface StoreState {
   archiveItem: (id: string) => Promise<void>;
 }
 
+const createThumbnail = async (file: File): Promise<File> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    img.onload = () => {
+      let width = img.width;
+      let height = img.height;
+      const maxSize = 300; // Smaller size for thumbnails
+      
+      if (width > height && width > maxSize) {
+        height = (height * maxSize) / width;
+        width = maxSize;
+      } else if (height > maxSize) {
+        width = (width * maxSize) / height;
+        height = maxSize;
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+      
+      ctx?.drawImage(img, 0, 0, width, height);
+      
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            reject(new Error('Failed to create blob'));
+            return;
+          }
+          const thumbnailFile = new File([blob], file.name, {
+            type: 'image/jpeg',
+            lastModified: Date.now(),
+          });
+          resolve(thumbnailFile);
+        },
+        'image/jpeg',
+        0.7
+      );
+    };
+    
+    img.onerror = () => reject(new Error('Failed to load image'));
+    img.src = URL.createObjectURL(file);
+  });
+};
+
 const optimizeImage = async (file: File): Promise<File> => {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -86,7 +132,9 @@ export const useStore = create<StoreState>((set) => ({
           return { ...item, status: "Expiré" as const };
         }
       }
-      return item as Item;
+      // Add thumbnail URL by replacing the last part of the path with 'thumbnails/'
+      const thumbnailUrl = item.image_url.replace('/items/', '/items/thumbnails/');
+      return { ...item, thumbnail_url: thumbnailUrl } as Item;
     });
 
     set({ items: updatedItems || [] });
@@ -94,15 +142,26 @@ export const useStore = create<StoreState>((set) => ({
 
   addItem: async ({ description, image }) => {
     const optimizedImage = await optimizeImage(image);
+    const thumbnail = await createThumbnail(image);
     
-    const fileExt = 'jpg'; 
-    const filePath = `${crypto.randomUUID()}.${fileExt}`;
+    const fileExt = 'jpg';
+    const fileName = crypto.randomUUID();
+    const filePath = `${fileName}.${fileExt}`;
+    const thumbnailPath = `thumbnails/${fileName}.${fileExt}`;
     
+    // Upload original image
     const { error: uploadError } = await supabase.storage
       .from('items')
       .upload(filePath, optimizedImage);
       
     if (uploadError) throw uploadError;
+
+    // Upload thumbnail
+    const { error: thumbnailError } = await supabase.storage
+      .from('items')
+      .upload(thumbnailPath, thumbnail);
+      
+    if (thumbnailError) throw thumbnailError;
 
     const { data: { publicUrl } } = supabase.storage
       .from('items')

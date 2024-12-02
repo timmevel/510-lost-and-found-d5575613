@@ -16,7 +16,7 @@ const ItemCard = ({ item, onReserveClick }: ItemCardProps) => {
   return (
     <div className="bg-card rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
       <img
-        src={item.image_url}
+        src={item.thumbnail_url || item.image_url}
         alt={item.description}
         className="w-full h-48 object-cover cursor-pointer"
         onClick={() => setShowImageModal(true)}

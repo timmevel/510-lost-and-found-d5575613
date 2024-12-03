@@ -11,20 +11,39 @@ interface ItemCardProps {
 
 const ItemCard = ({ item, onReserveClick }: ItemCardProps) => {
   const [showImageModal, setShowImageModal] = useState(false);
+  const [useFallbackImage, setUseFallbackImage] = useState(false);
   const daysLeft = 30 - Math.floor((new Date().getTime() - new Date(item.created_at).getTime()) / (1000 * 60 * 60 * 24));
+
+  const checkImage = (url: string): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(img.width > 0 && img.height > 0);
+      img.onerror = () => resolve(false);
+      img.src = url;
+    });
+  };
+
+  // Check thumbnail on component mount
+  useState(() => {
+    if (item.thumbnail_url) {
+      checkImage(item.thumbnail_url).then(isValid => {
+        if (!isValid) setUseFallbackImage(true);
+      });
+    }
+  });
 
   return (
     <div className="bg-card rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
       <img
-        src={item.thumbnail_url || item.image_url}
+        src={(!useFallbackImage && item.thumbnail_url) || item.image_url}
         alt={item.description}
         className="w-full h-48 object-cover cursor-pointer"
         onClick={() => setShowImageModal(true)}
         onError={(e) => {
-          // If thumbnail fails to load, fallback to original image
           const imgElement = e.target as HTMLImageElement;
           if (imgElement.src !== item.image_url) {
             imgElement.src = item.image_url;
+            setUseFallbackImage(true);
           }
         }}
       />

@@ -20,6 +20,13 @@ const ItemCard = ({ item, onReserveClick }: ItemCardProps) => {
         alt={item.description}
         className="w-full h-48 object-cover cursor-pointer"
         onClick={() => setShowImageModal(true)}
+        onError={(e) => {
+          // If thumbnail fails to load, fallback to original image
+          const imgElement = e.target as HTMLImageElement;
+          if (imgElement.src !== item.image_url) {
+            imgElement.src = item.image_url;
+          }
+        }}
       />
       <div className="p-4">
         <div className="flex justify-between items-start mb-2">

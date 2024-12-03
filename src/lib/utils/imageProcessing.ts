@@ -67,22 +67,34 @@ export const optimizeImage = async (file: File): Promise<File> => {
       canvas.height = height;
       
       ctx?.drawImage(img, 0, 0, width, height);
-      
-      canvas.toBlob(
-        (blob) => {
-          if (!blob) {
-            reject(new Error('Failed to create blob'));
-            return;
-          }
-          const optimizedFile = new File([blob], file.name, {
-            type: 'image/jpeg',
-            lastModified: Date.now(),
-          });
-          resolve(optimizedFile);
-        },
-        'image/jpeg',
-        0.8
-      );
+
+      const compressImage = (quality: number): void => {
+        canvas.toBlob(
+          async (blob) => {
+            if (!blob) {
+              reject(new Error('Failed to create blob'));
+              return;
+            }
+
+            // If the image is still too large and quality can be reduced further
+            if (blob.size > 500 * 1024 && quality > 0.1) {
+              compressImage(quality - 0.1);
+              return;
+            }
+
+            const optimizedFile = new File([blob], file.name, {
+              type: 'image/jpeg',
+              lastModified: Date.now(),
+            });
+            resolve(optimizedFile);
+          },
+          'image/jpeg',
+          quality
+        );
+      };
+
+      // Start with quality of 0.8 and reduce if needed
+      compressImage(0.8);
     };
     
     img.onerror = () => reject(new Error('Failed to load image'));
